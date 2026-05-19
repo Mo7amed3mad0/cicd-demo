@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME    = 'calculator-app'
-        VENV_DIR    = 'venv'
-        DEPLOY_DIR  = 'C:\\DeployedApps\\calculator-app'
+        APP_NAME   = 'calculator-app'
+        VENV_DIR   = 'venv'
+        DEPLOY_DIR = 'C:\\DeployedApps\\calculator-app'
+        PYTHON     = 'C:\\Users\\lenovo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
     }
 
     options {
@@ -49,21 +50,19 @@ pipeline {
 
                 bat """
                     echo [BUILD] Python version:
-                    python --version
+                    "${PYTHON}" --version
 
                     echo [BUILD] Creating virtual environment...
-                    python -m venv ${VENV_DIR}
+                    "${PYTHON}" -m venv ${VENV_DIR}
 
                     echo [BUILD] Installing dependencies...
-                    call ${VENV_DIR}\\Scripts\\activate.bat
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
+                    call ${VENV_DIR}\\Scripts\\activate.bat && pip install --upgrade pip && pip install -r requirements.txt
 
                     echo [BUILD] Installed packages:
-                    pip list
+                    call ${VENV_DIR}\\Scripts\\activate.bat && pip list
 
                     echo [BUILD] Running app to verify...
-                    python app\\calculator.py
+                    call ${VENV_DIR}\\Scripts\\activate.bat && python app\\calculator.py
 
                     echo [BUILD] Build completed successfully!
                 """
@@ -80,9 +79,7 @@ pipeline {
                 echo '========================================'
 
                 bat """
-                    call ${VENV_DIR}\\Scripts\\activate.bat
-                    echo [TEST] Running tests...
-                    pytest tests/ --tb=short --html=test-report.html --self-contained-html -v
+                    call ${VENV_DIR}\\Scripts\\activate.bat && pytest tests/ --tb=short --html=test-report.html --self-contained-html -v
                     echo [TEST] Test run complete!
                 """
             }
@@ -113,24 +110,18 @@ pipeline {
                     copy /Y requirements.txt "${DEPLOY_DIR}\\requirements.txt"
 
                     echo [DEPLOY] Writing deployment manifest...
-                    echo App Name   : ${APP_NAME}          > "${DEPLOY_DIR}\\deployment-info.txt"
-                    echo Build #    : ${BUILD_NUMBER}      >> "${DEPLOY_DIR}\\deployment-info.txt"
-                    echo Status     : DEPLOYED             >> "${DEPLOY_DIR}\\deployment-info.txt"
+                    echo App Name : ${APP_NAME}     > "${DEPLOY_DIR}\\deployment-info.txt"
+                    echo Build #  : ${BUILD_NUMBER} >> "${DEPLOY_DIR}\\deployment-info.txt"
+                    echo Status   : DEPLOYED        >> "${DEPLOY_DIR}\\deployment-info.txt"
 
                     echo [DEPLOY] Manifest:
                     type "${DEPLOY_DIR}\\deployment-info.txt"
 
                     echo [DEPLOY] Running smoke test on deployed app...
-                    python "${DEPLOY_DIR}\\app\\calculator.py"
+                    call ${VENV_DIR}\\Scripts\\activate.bat && python "${DEPLOY_DIR}\\app\\calculator.py"
 
                     echo [DEPLOY] Deployment successful!
                 """
-            }
-
-            post {
-                success {
-                    echo "Pipeline complete - ${env.APP_NAME} deployed successfully!"
-                }
             }
         }
     }
