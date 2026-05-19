@@ -38,7 +38,6 @@ pipeline {
                 }
             }
         }
-
         // --------------------------------------------------
         // STAGE 2: BUILD
         // --------------------------------------------------
@@ -56,7 +55,7 @@ pipeline {
                     "${PYTHON}" -m venv ${VENV_DIR}
 
                     echo [BUILD] Installing dependencies...
-                    call ${VENV_DIR}\\Scripts\\activate.bat && pip install --upgrade pip && pip install -r requirements.txt
+                    call ${VENV_DIR}\\Scripts\\activate.bat && python -m pip install -r requirements.txt
 
                     echo [BUILD] Installed packages:
                     call ${VENV_DIR}\\Scripts\\activate.bat && pip list
